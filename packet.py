@@ -256,12 +256,15 @@ class Packetizer (object):
         :param int n: number of bytes to read
         :return: the data read, as a `str`
 
-        :raises:
-            ``EOFError`` -- if the socket was closed before all the bytes could
-            be read
+        :raises EOFError:
+            if the socket was closed before all the bytes could be read
         """
+        
         out = bytes()
+
         # handle over-reading from reading the banner line
+        #raise after 10 consecutive timeouts
+        timeout_count = 0
         if len(self.__remainder) > 0:
             out = self.__remainder[:n]
             self.__remainder = self.__remainder[n:]
@@ -276,16 +279,17 @@ class Packetizer (object):
                     raise EOFError()
                 out += x
                 n -= len(x)
+                timeout_count = 0
             except socket.timeout:
                 got_timeout = True
+                timeout_count += 1
             except socket.error as e:
                 # on Linux, sometimes instead of socket.timeout, we get
                 # EAGAIN.  this is a bug in recent (> 2.6.9) kernels but
                 # we need to work around it.
-                arg = first_arg(e)
-                if arg == errno.EAGAIN:
+                if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
                     got_timeout = True
-                elif arg == errno.EINTR:
+                elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
                     # syscall interrupted; try again
                     pass
                 elif self.__closed:
@@ -297,6 +301,8 @@ class Packetizer (object):
                     raise EOFError()
                 if check_rekey and (len(out) == 0) and self.__need_rekey:
                     raise NeedRekeyException()
+                if timeout_count > 1000:
+                    raise IOError("Unexpected Timeout")
                 self._check_keepalive()
         return out
 
