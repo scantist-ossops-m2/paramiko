@@ -122,7 +122,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'hmac-md5-96',
     )
     _preferred_keys = (
-        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
@@ -217,8 +216,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'ecdsa-sha2-nistp384-cert-v01@openssh.com': ECDSAKey,
         'ecdsa-sha2-nistp521': ECDSAKey,
         'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
-        'ssh-ed25519': Ed25519Key,
-        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
     }
 
     _kex_info = {
