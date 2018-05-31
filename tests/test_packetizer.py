@@ -42,7 +42,7 @@ class PacketizerTest (unittest.TestCase):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
-        p = Packetizer(wsock)
+        p = Packetizer(wsock, 10000)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
         encryptor = Cipher(
@@ -69,7 +69,7 @@ class PacketizerTest (unittest.TestCase):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
-        p = Packetizer(rsock)
+        p = Packetizer(rsock, 10000)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
         decryptor = Cipher(
@@ -91,7 +91,7 @@ class PacketizerTest (unittest.TestCase):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
-        p = Packetizer(wsock)
+        p = Packetizer(wsock, 10000)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
         encryptor = Cipher(
