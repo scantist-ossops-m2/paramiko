@@ -49,6 +49,7 @@ class NeedRekeyException (Exception):
     pass
 
 
+    
 def first_arg(e):
     arg = None
     if type(e.args) is tuple and len(e.args) > 0:
@@ -72,7 +73,7 @@ class Packetizer (object):
     # Allow receiving this many bytes after a re-key request before terminating
     REKEY_BYTES_OVERFLOW_MAX = pow(2, 29)
 
-    def __init__(self, socket):
+    def __init__(self, socket, sock_timeout_mili):
         self.__socket = socket
         self.__logger = None
         self.__closed = False
@@ -117,6 +118,7 @@ class Packetizer (object):
         self.__timer = None
         self.__handshake_complete = False
         self.__timer_expired = False
+        self.__socket_timeout = sock_timeout_mili
 
     @property
     def closed(self):
@@ -262,9 +264,10 @@ class Packetizer (object):
         
         out = bytes()
 
+        current_milli_time = lambda: int(round(time.time() * 1000))
         # handle over-reading from reading the banner line
         #raise after 10 consecutive timeouts
-        timeout_count = 0
+        timeout_timer = current_milli_time()
         if len(self.__remainder) > 0:
             out = self.__remainder[:n]
             self.__remainder = self.__remainder[n:]
@@ -279,10 +282,9 @@ class Packetizer (object):
                     raise EOFError()
                 out += x
                 n -= len(x)
-                timeout_count = 0
+                timeout_timer = current_milli_time()
             except socket.timeout:
                 got_timeout = True
-                timeout_count += 1
             except socket.error as e:
                 # on Linux, sometimes instead of socket.timeout, we get
                 # EAGAIN.  this is a bug in recent (> 2.6.9) kernels but
@@ -301,7 +303,7 @@ class Packetizer (object):
                     raise EOFError()
                 if check_rekey and (len(out) == 0) and self.__need_rekey:
                     raise NeedRekeyException()
-                if timeout_count > 1000:
+                if current_milli_time() - timeout_timer > self.__socket_timeout:
                     raise IOError("Unexpected Timeout")
                 self._check_keepalive()
         return out

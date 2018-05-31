@@ -231,6 +231,7 @@ class SSHClient (ClosingContextManager):
         auth_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
+        sock_timeout_mili=1000*60*30
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -305,6 +306,8 @@ class SSHClient (ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
+        :param int sock_timeout_mili:  an optional timeout to wait for an
+            unresponsive server
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -357,7 +360,7 @@ class SSHClient (ClosingContextManager):
                 raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(
-            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
+            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds, sock_timeout_mili=sock_timeout_mili
         )
         t.use_compression(compress=compress)
         t.set_gss_host(
