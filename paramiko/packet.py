@@ -289,9 +289,10 @@ class Packetizer (object):
                 # on Linux, sometimes instead of socket.timeout, we get
                 # EAGAIN.  this is a bug in recent (> 2.6.9) kernels but
                 # we need to work around it.
-                if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
+                arg = first_arg(e)
+                if arg == errno.EAGAIN:
                     got_timeout = True
-                elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
+                elif arg == errno.EINTR:
                     # syscall interrupted; try again
                     pass
                 elif self.__closed:
