@@ -1,3 +1,0 @@
-[submodule "paramiko"]
-	path = paramiko
-	url = git@github.com:cyberx-labs/paramiko.git
