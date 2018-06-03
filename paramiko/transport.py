@@ -50,11 +50,10 @@ from paramiko.common import (
     MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA,
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, MSG_CHANNEL_EOF,
     MSG_CHANNEL_CLOSE, MIN_WINDOW_SIZE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE,
-    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE, HIGHEST_USERAUTH_MESSAGE_ID,
+    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
-from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
@@ -123,7 +122,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'hmac-md5-96',
     )
     _preferred_keys = (
-        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
@@ -218,8 +216,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'ecdsa-sha2-nistp384-cert-v01@openssh.com': ECDSAKey,
         'ecdsa-sha2-nistp521': ECDSAKey,
         'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
-        'ssh-ed25519': Ed25519Key,
-        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
     }
 
     _kex_info = {
@@ -252,7 +248,9 @@ class Transport(threading.Thread, ClosingContextManager):
                  default_window_size=DEFAULT_WINDOW_SIZE,
                  default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
                  gss_kex=False,
-                 gss_deleg_creds=True):
+                 gss_deleg_creds=True,
+                 sock_timeout_mili=1000*60*60*12
+                 ):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin
@@ -339,7 +337,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
-        self.packetizer = Packetizer(sock)
+        self.packetizer = Packetizer(sock, sock_timeout_mili)
         self.local_version = 'SSH-' + self._PROTO_ID + '-' + self._CLIENT_ID
         self.remote_version = ''
         self.local_cipher = self.remote_cipher = ''
